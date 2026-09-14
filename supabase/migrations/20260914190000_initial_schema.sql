@@ -190,7 +190,7 @@ create table public.findings (
   business_impact text not null default '',
   remediation text not null default '',
   reproduction_steps text not null default '',
-  references jsonb not null default '[]'::jsonb,
+  reference_links jsonb not null default '[]'::jsonb,
   duplicate_of uuid references public.findings(id) on delete set null,
   validated_by uuid references auth.users(id),
   validated_at timestamptz,
