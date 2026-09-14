@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Artrix approved job manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["jobId", "scopeId", "assetId", "jobType", "targets", "limits", "signature"],
+  "properties": {
+    "jobId": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "scopeId": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "assetId": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "jobType": {
+      "enum": [
+        "passive_subdomain_discovery",
+        "dns_resolution",
+        "permitted_http_probing",
+        "technology_fingerprinting",
+        "approved_url_collection",
+        "controlled_template_check"
+      ]
+    },
+    "targets": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50,
+      "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]{0,252}$" }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requestsPerMinute", "timeoutSeconds"],
+      "properties": {
+        "requestsPerMinute": { "type": "integer", "minimum": 1, "maximum": 600 },
+        "timeoutSeconds": { "type": "integer", "minimum": 5, "maximum": 3600 }
+      }
+    },
+    "signature": { "type": "string", "minLength": 32, "maxLength": 1024 }
+  }
+}
