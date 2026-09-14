@@ -1,0 +1,3 @@
+-- Intentionally empty.
+-- Artrix never creates default users, passwords, tenant data, or production demo data.
+-- Use ARTRIX_DEMO_MODE=true only in local development for synthetic in-memory workflow data.
