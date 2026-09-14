@@ -34,7 +34,10 @@ export function WorkspaceDashboard() {
     }
   }, []);
 
-  useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void refresh(); }, 0);
+    return () => window.clearTimeout(timer);
+  }, [refresh]);
 
   async function run(label: string, operation: () => Promise<void>) {
     setState({ kind: "loading", message: label });

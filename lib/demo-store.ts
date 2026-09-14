@@ -34,7 +34,6 @@ type DemoState = {
 };
 
 declare global {
-  // eslint-disable-next-line no-var
   var __artrixDemoState: DemoState | undefined;
 }
 
