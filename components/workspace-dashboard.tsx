@@ -1,9 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { WorkspaceDashboardData } from "@/lib/types";
+import { EngagementWizard } from "@/components/engagement-wizard";
 
 type ActionState = { kind: "idle" | "loading" | "success" | "error"; message?: string };
+
+async function apiRequest(path: string, init?: RequestInit) {
+  const response = await fetch(path, {
+    ...init,
+    headers: { "content-type": "application/json", ...(init?.headers ?? {}) }
+  });
+  const payload = await response.json();
+  if (!response.ok) throw new Error(payload.error ?? "Request failed.");
+  return payload;
+}
 
 function Metric({ label, value }: { label: string; value: string | number }) {
   return <article className="rounded-lg border border-line bg-panel/70 p-4"><p className="text-xs uppercase tracking-wider text-slate-400">{label}</p><p className="mt-2 text-2xl font-black text-white">{value}</p></article>;
@@ -12,27 +23,18 @@ function Metric({ label, value }: { label: string; value: string | number }) {
 export function WorkspaceDashboard() {
   const [data, setData] = useState<WorkspaceDashboardData | null>(null);
   const [state, setState] = useState<ActionState>({ kind: "idle" });
+  const [report, setReport] = useState<string | null>(null);
 
-  async function request(path: string, init?: RequestInit) {
-    const response = await fetch(path, {
-      ...init,
-      headers: { "content-type": "application/json", ...(init?.headers ?? {}) }
-    });
-    const payload = await response.json();
-    if (!response.ok) throw new Error(payload.error ?? "Request failed.");
-    return payload;
-  }
-
-  async function refresh() {
+  const refresh = useCallback(async () => {
     try {
-      const payload = await request("/api/workspace");
+      const payload = await apiRequest("/api/workspace");
       setData(payload);
     } catch (error) {
       setState({ kind: "error", message: error instanceof Error ? error.message : "Workspace unavailable." });
     }
-  }
+  }, []);
 
-  useEffect(() => { void refresh(); }, []);
+  useEffect(() => { void refresh(); }, [refresh]);
 
   async function run(label: string, operation: () => Promise<void>) {
     setState({ kind: "loading", message: label });
@@ -83,6 +85,8 @@ export function WorkspaceDashboard() {
         <Metric label="Audit events" value={data.auditLogs.length} />
       </section>
 
+      <EngagementWizard onComplete={refresh} />
+
       <section className="grid gap-5 lg:grid-cols-2">
         <article className="rounded-xl border border-line bg-panel/80 p-5">
           <p className="font-mono text-xs uppercase tracking-wider text-electric">Scope gate</p>
@@ -97,13 +101,15 @@ export function WorkspaceDashboard() {
           <p className="font-mono text-xs uppercase tracking-wider text-electric">Safe workflow demo</p>
           <h2 className="mt-2 text-lg font-bold text-white">Run the governed sequence</h2>
           <div className="mt-4 flex flex-wrap gap-2">
-            <button disabled={state.kind === "loading"} onClick={() => run("Safe discovery job", async () => { await request("/api/jobs", { method: "POST", body: JSON.stringify({ scopeId: data.scope.id, assetId: data.assets[0]?.id, type: "passive_subdomain_discovery" }) }); })} className="rounded-md border border-electric/50 px-3 py-2 text-sm font-bold text-electric hover:bg-electric/10 disabled:opacity-50">Queue safe discovery</button>
-            {validationFinding && <button disabled={state.kind === "loading"} onClick={() => run("Finding validation", async () => { await request(`/api/findings/${validationFinding.id}/validate`, { method: "POST", body: "{}" }); })} className="rounded-md border border-signal/50 px-3 py-2 text-sm font-bold text-signal hover:bg-signal/10 disabled:opacity-50">Validate finding</button>}
-            {remediationFinding && <button disabled={state.kind === "loading"} onClick={() => run("Remediation assignment", async () => { await request("/api/remediation", { method: "POST", body: JSON.stringify({ findingId: remediationFinding.id, title: "Review and implement authorization control", owner: "Engineering owner", dueDate: "2026-10-01" }) }); })} className="rounded-md border border-line px-3 py-2 text-sm font-bold text-white hover:border-signal disabled:opacity-50">Assign remediation</button>}
-            {retestFinding && <button disabled={state.kind === "loading"} onClick={() => run("Retest recording", async () => { await request("/api/retests", { method: "POST", body: JSON.stringify({ findingId: retestFinding.id, result: "pass", notes: "Synthetic fix verification for local demo." }) }); })} className="rounded-md border border-line px-3 py-2 text-sm font-bold text-white hover:border-signal disabled:opacity-50">Record retest</button>}
-            <button disabled={state.kind === "loading"} onClick={() => run("AI test result", async () => { await request("/api/ai/test-runs", { method: "POST", body: JSON.stringify({ systemName: "Demo support agent", testCase: "Benign prompt injection boundary check", category: "prompt_injection", result: "pass", mitigation: "Require tool approval and filter untrusted content." }) }); })} className="rounded-md border border-line px-3 py-2 text-sm font-bold text-white hover:border-signal disabled:opacity-50">Record AI test</button>
+            <button disabled={state.kind === "loading" || !data.assets[0]} onClick={() => run("Safe discovery job", async () => { await apiRequest("/api/jobs", { method: "POST", body: JSON.stringify({ scopeId: data.scope.id, assetId: data.assets[0]?.id, type: "passive_subdomain_discovery" }) }); })} className="rounded-md border border-electric/50 px-3 py-2 text-sm font-bold text-electric hover:bg-electric/10 disabled:opacity-50">Queue safe discovery</button>
+            {validationFinding && <button disabled={state.kind === "loading"} onClick={() => run("Finding validation", async () => { await apiRequest(`/api/findings/${validationFinding.id}/validate`, { method: "POST", body: "{}" }); })} className="rounded-md border border-signal/50 px-3 py-2 text-sm font-bold text-signal hover:bg-signal/10 disabled:opacity-50">Validate finding</button>}
+            {remediationFinding && <button disabled={state.kind === "loading"} onClick={() => run("Remediation assignment", async () => { await apiRequest("/api/remediation", { method: "POST", body: JSON.stringify({ findingId: remediationFinding.id, title: "Review and implement authorization control", owner: "Engineering owner", dueDate: "2026-10-01" }) }); })} className="rounded-md border border-line px-3 py-2 text-sm font-bold text-white hover:border-signal disabled:opacity-50">Assign remediation</button>}
+            {retestFinding && <button disabled={state.kind === "loading"} onClick={() => run("Retest recording", async () => { await apiRequest("/api/retests", { method: "POST", body: JSON.stringify({ findingId: retestFinding.id, result: "pass", notes: "Synthetic fix verification for local demo." }) }); })} className="rounded-md border border-line px-3 py-2 text-sm font-bold text-white hover:border-signal disabled:opacity-50">Record retest</button>}
+            <button disabled={state.kind === "loading"} onClick={() => run("AI test result", async () => { await apiRequest("/api/ai/test-runs", { method: "POST", body: JSON.stringify({ systemName: "Demo support agent", testCase: "Benign prompt injection boundary check", category: "prompt_injection", result: "pass", mitigation: "Require tool approval and filter untrusted content." }) }); })} className="rounded-md border border-line px-3 py-2 text-sm font-bold text-white hover:border-signal disabled:opacity-50">Record AI test</button>
+            <button disabled={state.kind === "loading"} onClick={() => run("Technical report generation", async () => { const payload = await apiRequest("/api/reports", { method: "POST", body: JSON.stringify({ type: "technical" }) }); setReport(payload.report.markdown); })} className="rounded-md border border-line px-3 py-2 text-sm font-bold text-white hover:border-signal disabled:opacity-50">Generate report</button>
           </div>
           {state.kind !== "idle" && <p role={state.kind === "error" ? "alert" : "status"} className={`mt-4 text-sm ${state.kind === "error" ? "text-red-300" : state.kind === "success" ? "text-signal" : "text-slate-300"}`}>{state.message}</p>}
+          {report && <details className="mt-4 rounded-lg border border-line/80 p-3"><summary className="cursor-pointer text-sm font-semibold text-signal">Preview generated technical report</summary><pre className="mt-3 overflow-auto whitespace-pre-wrap text-xs leading-5 text-slate-300">{report}</pre></details>}
         </article>
       </section>
 

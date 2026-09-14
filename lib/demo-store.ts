@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { assertDemoMode } from "@/lib/env";
-import { isExcluded, isTargetWithinRoot } from "@/lib/security";
+import { isExcluded, isTargetWithinRoot, normalizeHostname } from "@/lib/security";
 import type {
   DemoAiTestRun,
   DemoAsset,
@@ -309,4 +309,132 @@ export function recordDemoAiTest(input: {
   current.evidence.unshift(evidence);
   audit(current, "ai_test.recorded", "ai_test_run", run.id, `Recorded benign ${run.category} test result.`);
   return run;
+}
+
+
+function requireSyntheticDemoHostname(value: string): string {
+  const hostname = normalizeHostname(value);
+  if (!hostname.endsWith(".test")) {
+    throw new Error("The local demo accepts synthetic .test domains only.");
+  }
+  return hostname;
+}
+
+export function createDemoOrganization(input: { name: string }) {
+  const current = state();
+  current.organization = { id: randomUUID(), name: input.name };
+  audit(current, "organization.created", "organization", current.organization.id, "Synthetic local-demo organization created.");
+  return current.organization;
+}
+
+export function createDemoClient(input: { name: string; contactName: string; contactEmail: string }): DemoClient {
+  const current = state();
+  current.client = { id: randomUUID(), ...input };
+  audit(current, "client.created", "client", current.client.id, "Synthetic client workspace created.");
+  return current.client;
+}
+
+export function createDemoEngagement(input: { clientId: string; name: string; startsOn: string; endsOn: string }): DemoEngagement {
+  const current = state();
+  if (input.clientId !== current.client.id) throw new Error("Client not found.");
+  current.engagement = { id: randomUUID(), ...input, status: "active" };
+  current.scope = {
+    id: randomUUID(),
+    engagementId: current.engagement.id,
+    status: "draft",
+    rootDomains: [],
+    exclusions: [],
+    allowedTestTypes: [],
+    rateLimitPerMinute: 20,
+    timeoutSeconds: 120,
+    testingWindow: "Set before approval",
+    emergencyContact: current.client.contactEmail,
+    stopConditions: [],
+    authorizationStatus: "pending"
+  };
+  current.assets = [];
+  current.jobs = [];
+  current.evidence = [];
+  current.findings = [];
+  current.remediationTasks = [];
+  current.retests = [];
+  current.aiTestRuns = [];
+  audit(current, "engagement.created", "engagement", current.engagement.id, "Synthetic engagement created with a draft scope.");
+  return current.engagement;
+}
+
+export function createDemoScope(input: {
+  engagementId: string;
+  rootDomains: string[];
+  exclusions: string[];
+  allowedTestTypes: SafeJobType[];
+  rateLimitPerMinute: number;
+  timeoutSeconds: number;
+  testingWindow: string;
+  emergencyContact: string;
+  stopConditions: string[];
+}): DemoScope {
+  const current = state();
+  if (input.engagementId !== current.engagement.id) throw new Error("Engagement not found.");
+  if (input.rootDomains.length === 0) throw new Error("A scope must include at least one approved root domain.");
+  current.scope = {
+    id: randomUUID(),
+    engagementId: input.engagementId,
+    status: "draft",
+    rootDomains: input.rootDomains.map(requireSyntheticDemoHostname),
+    exclusions: input.exclusions.map(requireSyntheticDemoHostname),
+    allowedTestTypes: input.allowedTestTypes,
+    rateLimitPerMinute: input.rateLimitPerMinute,
+    timeoutSeconds: input.timeoutSeconds,
+    testingWindow: input.testingWindow,
+    emergencyContact: input.emergencyContact,
+    stopConditions: input.stopConditions,
+    authorizationStatus: "pending"
+  };
+  current.assets = [];
+  audit(current, "scope.created", "scope", current.scope.id, "Draft scope created; written authorization is still pending.");
+  return current.scope;
+}
+
+export function approveDemoScope(id: string): DemoScope {
+  const current = state();
+  if (id !== current.scope.id) throw new Error("Scope not found.");
+  if (current.scope.rootDomains.length === 0 || current.scope.allowedTestTypes.length === 0) {
+    throw new Error("A scope must contain approved targets and allowed test types before approval.");
+  }
+  current.scope.status = "approved";
+  current.scope.authorizationStatus = "approved";
+  audit(current, "scope.approved", "scope", current.scope.id, "Written authorization and scope approval recorded in local demo.");
+  return current.scope;
+}
+
+export function addDemoAsset(input: {
+  scopeId: string;
+  hostname: string;
+  kind: DemoAsset["kind"];
+  environment: DemoAsset["environment"];
+  priority: DemoAsset["priority"];
+}): DemoAsset {
+  const current = state();
+  if (input.scopeId !== current.scope.id) throw new Error("Scope not found.");
+  if (current.scope.status !== "approved" || current.scope.authorizationStatus !== "approved") {
+    throw new Error("Assets can be used for jobs only after the scope is approved.");
+  }
+  const hostname = requireSyntheticDemoHostname(input.hostname);
+  if (!current.scope.rootDomains.some((root) => isTargetWithinRoot(hostname, root)) || isExcluded(hostname, current.scope.exclusions)) {
+    throw new Error("The asset is not inside the approved scope or is explicitly excluded.");
+  }
+  const asset: DemoAsset = {
+    id: randomUUID(),
+    scopeId: current.scope.id,
+    hostname,
+    kind: input.kind,
+    environment: input.environment,
+    scopeStatus: "in_scope",
+    source: "Local demo asset inventory",
+    priority: input.priority
+  };
+  current.assets.unshift(asset);
+  audit(current, "asset.created", "asset", asset.id, "In-scope synthetic asset added to the inventory.");
+  return asset;
 }
