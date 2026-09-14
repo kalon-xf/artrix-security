@@ -15,18 +15,19 @@ import {
   validateDemoFinding
 } from "../lib/demo-store";
 
-const originalNodeEnv = process.env["NODE_ENV"];
-const originalDemoMode = process.env["ARTRIX_DEMO_MODE"];
+const mutableEnv = process.env as Record<string, string | undefined>;
+const originalNodeEnv = mutableEnv["NODE_ENV"];
+const originalDemoMode = mutableEnv["ARTRIX_DEMO_MODE"];
 
 beforeEach(() => {
-  process.env["NODE_ENV"] = "development";
-  process.env["ARTRIX_DEMO_MODE"] = "true";
+  mutableEnv["NODE_ENV"] = "development";
+  mutableEnv["ARTRIX_DEMO_MODE"] = "true";
   seedDemo();
 });
 
 afterAll(() => {
-  process.env["NODE_ENV"] = originalNodeEnv;
-  process.env["ARTRIX_DEMO_MODE"] = originalDemoMode;
+  mutableEnv["NODE_ENV"] = originalNodeEnv;
+  mutableEnv["ARTRIX_DEMO_MODE"] = originalDemoMode;
 });
 
 describe("development-only authorized workflow", () => {
