@@ -16,11 +16,12 @@ export default function HomePage() {
           Security work that moves from <span className="text-signal">scope</span> to <span className="text-electric">verified fix.</span>
         </h1>
         <p className="mt-7 max-w-3xl text-lg leading-8 text-slate-300">
-          Artrix gives researchers, consultancies, startups, engineering teams, and clients a governed workspace for authorized application-security and AI red-team engagements.
+          Artrix is a self-hosted, governed workspace for authorized application-security and AI red-team engagements. Bring your own approved model provider while target data, evidence, and controls remain on your infrastructure.
         </p>
         <div className="mt-10 flex flex-wrap gap-4">
           <Link href="/contact" className="rounded-md bg-signal px-5 py-3 font-bold text-ink shadow-glow transition hover:bg-[#7cf7ca]">Book an AI Security Readiness Call</Link>
           <Link href="/workspace" className="rounded-md border border-line bg-panel/60 px-5 py-3 font-bold text-white transition hover:border-electric">Explore the local demo</Link>
+          <Link href="/scans" className="rounded-md border border-electric/50 bg-panel/60 px-5 py-3 font-bold text-electric transition hover:border-electric">Open scan console</Link>
         </div>
         <p className="mt-5 text-sm text-slate-400">Authorized security testing only. No unrestricted exploitation or unapproved scanning.</p>
       </section>

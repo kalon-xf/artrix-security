@@ -14,9 +14,11 @@
 
 ## Phase 2 — Safe discovery
 
-- [ ] Typed job manifests and local worker protocol
-- [ ] Scope verification, cancellation, retention and parsed evidence
+- [x] Typed job manifests and local worker protocol
+- [x] Scan-console visibility for authorization, exclusions, rate limits, and the safe methodology
+- [ ] Scope verification, cancellation, retention and parsed evidence in a signed local worker
 - [ ] Tool-version manifest and controlled job runners
+- [ ] Authenticated local WebSocket telemetry; no telemetry binding beyond loopback by default
 
 ## Phase 3 — Findings to closure
 
@@ -29,6 +31,12 @@
 - [x] Local-demo benign AI test-result records
 - [ ] Benign test-case library and result tracking
 - [ ] Coverage reporting and safe remediation guidance
+
+## Phase 5 — Self-hosted runtime
+
+- [ ] BYO-provider configuration with server-only secret storage and per-organization rate/cost limits
+- [ ] Optional notification integrations with opt-in, least-privilege credentials, and audit records
+- [ ] Branded PDF rendering, object storage, and safe report download controls
 
 ## Production gates
 

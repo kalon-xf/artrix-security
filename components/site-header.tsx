@@ -32,6 +32,9 @@ export function SiteHeader() {
           <Link href="/workspace" className="hidden text-sm text-slate-300 hover:text-white sm:inline">
             Workspace
           </Link>
+          <Link href="/scans" className="hidden text-sm text-slate-300 hover:text-white sm:inline">
+            Scan console
+          </Link>
           <Link href="/contact" className="rounded-md bg-signal px-3 py-2 text-sm font-bold text-ink transition hover:bg-[#7cf7ca]">
             Book a readiness call
           </Link>
