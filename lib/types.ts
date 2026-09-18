@@ -140,6 +140,77 @@ export type DemoAuditLog = {
   detail: string;
 };
 
+export type SuperhumanGateKey =
+  | "registered_target"
+  | "current_explicit_authorization"
+  | "in_scope_asset"
+  | "permitted_technique"
+  | "non_destructive_plan"
+  | "rate_and_time_limits";
+
+export type SuperhumanGateFact = {
+  key: SuperhumanGateKey;
+  label: string;
+  satisfied: boolean;
+  detail: string;
+};
+
+export type SuperhumanTaskStatus = "blocked" | "pending" | "running" | "completed" | "awaiting_approval";
+export type SuperhumanMissionStatus = "blocked" | "awaiting_human_approval" | "ready_for_validation" | "completed" | "cancelled";
+
+export type SuperhumanTask = {
+  id: string;
+  phase: string;
+  title: string;
+  kind: "authorization_gate" | "planning" | "safe_job" | "evidence" | "memory" | "analysis" | "human_checkpoint" | "reporting";
+  status: SuperhumanTaskStatus;
+  dependsOn: string[];
+  approvalRequired: boolean;
+  jobType?: SafeJobType;
+  evidenceIds: string[];
+  rationale: string;
+};
+
+export type SuperhumanMemory = {
+  id: string;
+  kind: "evidence" | "pattern" | "decision";
+  content: string;
+  sourceId: string;
+  similarity: number;
+  grounding: "verified_observation" | "candidate_pattern" | "human_decision";
+};
+
+export type SuperhumanHypothesis = {
+  id: string;
+  title: string;
+  summary: string;
+  status: "candidate" | "rejected" | "human_validated";
+  confidence: number;
+  evidenceIds: string[];
+  missingEvidence: string[];
+  requiresHumanValidation: true;
+};
+
+export type SuperhumanMission = {
+  id: string;
+  name: "AIFIX3R Superhuman";
+  plannerVersion: string;
+  engagementId: string;
+  scopeId: string;
+  assetId: string;
+  objective: string;
+  status: SuperhumanMissionStatus;
+  authorizationGate: SuperhumanGateFact[];
+  tasks: SuperhumanTask[];
+  memories: SuperhumanMemory[];
+  hypotheses: SuperhumanHypothesis[];
+  guardrails: string[];
+  stopConditions: string[];
+  nextAction: string;
+  createdAt: string;
+  approvedAt?: string;
+};
+
 export type WorkspaceDashboardData = {
   organization: { id: string; name: string };
   client: DemoClient;

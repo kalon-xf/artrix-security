@@ -11,6 +11,7 @@ Artrix is an India-first, self-hosted platform for explicitly authorized applica
 - Premium dark public website for services, AI red-team, API authorization, RAG/agent security, about, and assessment requests.
 - Development-only local demo workspace with an approval-gated engagement workflow.
 - A local scan console that makes the 22-stage assurance methodology, scope gate, rate limits, exclusions, and audit posture visible before a safe job is queued.
+- AIFIX3R Superhuman mission control with a six-fact authorization gate, inspectable task graph, evidence-grounded hypotheses, pgvector-ready memory, and human validation checkpoints.
 - Safe job-manifest design: no arbitrary shell commands, no unrestricted scanning, and no job outside approved scope.
 - PostgreSQL/Supabase migration foundation with organization tenancy and RLS.
 - Docker, CI, tests, architecture documentation, and deployment guidance.
@@ -23,7 +24,7 @@ npm install
 npm run dev
 ```
 
-See [Local setup](docs/LOCAL_SETUP.md), [Architecture](docs/ARCHITECTURE.md), and [Roadmap](docs/ROADMAP.md).
+See [Local setup](docs/LOCAL_SETUP.md), [Architecture](docs/ARCHITECTURE.md), [Superhuman](docs/SUPERHUMAN.md), and [Roadmap](docs/ROADMAP.md).
 
 ## Production note
 

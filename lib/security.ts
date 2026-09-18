@@ -9,6 +9,16 @@ export const safeJobRequestSchema = z.object({
   type: safeJobTypeSchema
 });
 
+export const superhumanMissionRequestSchema = z.object({
+  scopeId: z.string().min(1).max(120),
+  assetId: z.string().min(1).max(120),
+  objective: z.string().trim().min(12).max(500)
+}).strict();
+
+export const superhumanApprovalRequestSchema = z.object({
+  rationale: z.string().trim().min(12).max(500)
+}).strict();
+
 const hostnamePattern = /^(?=.{1,253}$)(?!-)[a-z0-9-]{1,63}(?<!-)(\.(?!-)[a-z0-9-]{1,63}(?<!-))+$/;
 
 export function normalizeHostname(input: string): string {

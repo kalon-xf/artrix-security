@@ -38,6 +38,18 @@
 - [ ] Optional notification integrations with opt-in, least-privilege credentials, and audit records
 - [ ] Branded PDF rendering, object storage, and safe report download controls
 
+## Phase 6 — AIFIX3R Superhuman
+
+- [x] Six-fact deny-by-default mission authorization gate
+- [x] Inspectable 22-phase task-graph vertical slice
+- [x] Evidence-linked candidate hypotheses and explicit missing-evidence state
+- [x] Security-lead validation-plan checkpoint
+- [x] PostgreSQL/pgvector-ready mission, task, memory, hypothesis, and approval schema
+- [ ] Structured-output BYO LLM planner with organization cost limits
+- [ ] Bounded AIFIX3R pattern-card retrieval and citation
+- [ ] Signed worker execution, cancellation re-check, and append-only evidence integrity
+- [ ] Human-validated memory promotion and independent verifier workflow
+
 ## Production gates
 
 Before production use: integrate managed authentication, apply migrations to a managed PostgreSQL instance, configure object storage, enable rate limiting, provision signed worker identity, complete an independent security review, and exercise backups/restores.

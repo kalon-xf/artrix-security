@@ -1,6 +1,12 @@
 import { randomUUID } from "crypto";
 import { assertDemoMode } from "@/lib/env";
 import { isExcluded, isTargetWithinRoot, normalizeHostname } from "@/lib/security";
+import {
+  approveSuperhumanValidation,
+  buildSuperhumanMission,
+  evaluateSuperhumanGate,
+  selectDiscoveryJob
+} from "@/lib/superhuman";
 import type {
   DemoAiTestRun,
   DemoAsset,
@@ -15,6 +21,7 @@ import type {
   DemoScope,
   SafeJobType,
   Severity,
+  SuperhumanMission,
   WorkspaceDashboardData
 } from "@/lib/types";
 
@@ -30,6 +37,7 @@ type DemoState = {
   remediationTasks: DemoRemediationTask[];
   retests: DemoRetest[];
   aiTestRuns: DemoAiTestRun[];
+  superhumanMissions: SuperhumanMission[];
   auditLogs: DemoAuditLog[];
 };
 
@@ -117,6 +125,7 @@ function createSeedState(): DemoState {
     remediationTasks: [],
     retests: [],
     aiTestRuns: [],
+    superhumanMissions: [],
     auditLogs: []
   };
   audit(state, "authorization.approved", "scope", state.scope.id, "Demo written authorization and scope were approved.");
@@ -310,6 +319,55 @@ export function recordDemoAiTest(input: {
   return run;
 }
 
+export function getDemoSuperhumanMissions(): SuperhumanMission[] {
+  return state().superhumanMissions;
+}
+
+export function startDemoSuperhumanMission(input: {
+  scopeId: string;
+  assetId: string;
+  objective: string;
+}): SuperhumanMission {
+  const current = state();
+  const objective = input.objective.trim();
+  if (objective.length < 12 || objective.length > 500) throw new Error("Mission objective must be between 12 and 500 characters.");
+  if (input.scopeId !== current.scope.id) throw new Error("Scope not found.");
+  const asset = current.assets.find((item) => item.id === input.assetId && item.scopeId === input.scopeId);
+  if (!asset) throw new Error("The selected asset was not found in this scope.");
+  const jobType = selectDiscoveryJob(current.scope);
+  const gate = evaluateSuperhumanGate(current.scope, asset, jobType);
+  const missingFacts = gate.filter((fact) => !fact.satisfied);
+  if (!jobType || missingFacts.length > 0) {
+    const detail = missingFacts.map((fact) => fact.label).join(", ") || "Permitted discovery technique";
+    audit(current, "superhuman.blocked", "scope", current.scope.id, `Mission blocked; missing authorization facts: ${detail}.`);
+    throw new Error(`Superhuman mission blocked. Resolve: ${detail}.`);
+  }
+
+  const job = queueSafeDemoJob({ scopeId: current.scope.id, assetId: asset.id, type: jobType });
+  const mission = buildSuperhumanMission({
+    engagementId: current.engagement.id,
+    scope: current.scope,
+    asset,
+    objective,
+    createdAt: now(),
+    jobType,
+    jobId: job.id,
+    evidenceIds: job.evidenceIds
+  });
+  current.superhumanMissions.unshift(mission);
+  audit(current, "superhuman.mission_started", "superhuman_mission", mission.id, "Evidence-grounded mission reached the human validation checkpoint.");
+  return mission;
+}
+
+export function approveDemoSuperhumanMission(id: string, rationale: string): SuperhumanMission {
+  const current = state();
+  const mission = current.superhumanMissions.find((item) => item.id === id);
+  if (!mission) throw new Error("Superhuman mission not found.");
+  const approved = approveSuperhumanValidation(mission, now());
+  audit(current, "superhuman.validation_plan_approved", "superhuman_mission", mission.id, `Security lead approved the bounded validation plan; the candidate remains unvalidated. Rationale: ${rationale}`);
+  return approved;
+}
+
 
 function requireSyntheticDemoHostname(value: string): string {
   const hostname = normalizeHostname(value);
@@ -358,6 +416,7 @@ export function createDemoEngagement(input: { clientId: string; name: string; st
   current.remediationTasks = [];
   current.retests = [];
   current.aiTestRuns = [];
+  current.superhumanMissions = [];
   audit(current, "engagement.created", "engagement", current.engagement.id, "Synthetic engagement created with a draft scope.");
   return current.engagement;
 }

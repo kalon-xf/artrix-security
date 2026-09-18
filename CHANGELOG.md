@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-18
+
+- Added the first AIFIX3R Superhuman vertical slice: governed mission planning, an inspectable evidence graph, pgvector-ready memory, candidate-hypothesis provenance, and a security-lead approval checkpoint.
+
 All notable changes to Artrix are documented here.
 
 ## [Unreleased]

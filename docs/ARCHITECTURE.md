@@ -10,6 +10,7 @@ Artrix manages authorized application-security and AI red-team engagements. It c
 Browser UI → Next.js server routes → tenant-aware data layer → PostgreSQL
                                       ↘ audit log
                                       ↘ approved-job queue → local worker
+                                      ↘ Superhuman graph → evidence memory
 ```
 
 Every job is represented by a typed manifest. The worker accepts only an allowlisted job type and allowlisted arguments after server-side authorization, scope, rate-limit, and testing-window checks. It never accepts user-supplied shell commands.
@@ -60,3 +61,7 @@ Organizations, memberships, clients, engagements, authorizations, scopes, assets
 - Explicit demo mode only in development.
 - Audit events for authorization, scope, job, finding validation, report export, remediation, and retest actions.
 - Sanitized evidence UI; raw request/response content is not displayed by default.
+
+## AIFIX3R Superhuman boundary
+
+The Superhuman planner can create a mission graph, recall evidence-linked memory, and form candidate hypotheses. It cannot grant itself execution authority. Scope checks happen outside the model, workers accept typed manifests only, and a security lead must approve a bounded validation plan. Pattern similarity and model confidence never convert a candidate into a validated finding.
