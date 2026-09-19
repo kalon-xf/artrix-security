@@ -18,6 +18,18 @@ Artrix is an India-first, self-hosted platform for explicitly authorized applica
 
 ## Quick start
 
+### One-command Linux installation
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kalon-xf/artrix-security/codex/artrix-build/scripts/install.sh | bash
+```
+
+Then run `~/.local/bin/artrix start` and open `http://127.0.0.1:3000`.
+
+The installer requires Git, Node.js 20.11+, and npm. It installs under `~/.local/share/artrix-security`, preserves an existing `.env.local`, refuses dirty or mismatched checkouts, installs pinned dependencies, and completes a production build before creating the launcher.
+
+### Manual installation
+
 ```bash
 cp .env.example .env.local
 npm install

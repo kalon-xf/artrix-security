@@ -1,5 +1,28 @@
 # Local setup
 
+## One-command installation (Kali, Ubuntu, and other Linux systems)
+
+With Git, Node.js 20.11+, and npm already installed, run:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kalon-xf/artrix-security/codex/artrix-build/scripts/install.sh | bash
+```
+
+Start the loopback-only local demo:
+
+```bash
+~/.local/bin/artrix start
+```
+
+Open `http://127.0.0.1:3000`. The launcher also supports `artrix check`, `artrix update`, and `artrix version`.
+
+The installer defaults to `~/.local/share/artrix-security` and never overwrites `.env.local`. Customize paths before the pipe when needed:
+
+```bash
+ARTRIX_INSTALL_DIR=/opt/artrix ARTRIX_BIN_DIR="$HOME/.local/bin" \
+  bash -c "$(curl -fsSL https://raw.githubusercontent.com/kalon-xf/artrix-security/codex/artrix-build/scripts/install.sh)"
+```
+
 ## Prerequisites
 
 - Node.js 20.11 or newer

@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+source_path="${BASH_SOURCE[0]}"
+while [[ -L "$source_path" ]]; do
+  source_dir="$(cd -P "$(dirname "$source_path")" >/dev/null 2>&1 && pwd)"
+  source_path="$(readlink "$source_path")"
+  [[ "$source_path" != /* ]] && source_path="$source_dir/$source_path"
+done
+readonly ARTRIX_ROOT="$(cd -P "$(dirname "$source_path")/.." >/dev/null 2>&1 && pwd)"
+readonly ARTRIX_HOST="${ARTRIX_HOST:-127.0.0.1}"
+readonly ARTRIX_PORT="${ARTRIX_PORT:-3000}"
+readonly ARTRIX_BRANCH="${ARTRIX_BRANCH:-codex/artrix-build}"
+
+fail() { printf 'artrix: %s\n' "$*" >&2; exit 1; }
+
+validate_port() {
+  [[ "$ARTRIX_PORT" =~ ^[0-9]+$ ]] || fail "ARTRIX_PORT must be a number."
+  (( ARTRIX_PORT >= 1 && ARTRIX_PORT <= 65535 )) || fail "ARTRIX_PORT must be between 1 and 65535."
+}
+
+start() {
+  validate_port
+  cd "$ARTRIX_ROOT"
+  printf 'Starting Artrix on http://%s:%s\n' "$ARTRIX_HOST" "$ARTRIX_PORT"
+  printf 'Press Ctrl+C to stop. Demo mode uses synthetic .test assets only.\n'
+  exec env \
+    ARTRIX_DEMO_MODE="${ARTRIX_DEMO_MODE:-true}" \
+    NEXT_PUBLIC_APP_URL="${NEXT_PUBLIC_APP_URL:-http://${ARTRIX_HOST}:${ARTRIX_PORT}}" \
+    npm run dev -- --hostname "$ARTRIX_HOST" --port "$ARTRIX_PORT"
+}
+
+check() {
+  cd "$ARTRIX_ROOT"
+  npm run typecheck
+  npm run lint
+  npm test
+  npm run build
+}
+
+update() {
+  cd "$ARTRIX_ROOT"
+  [[ -z "$(git status --porcelain)" ]] || fail "The checkout has uncommitted changes; update was stopped."
+  [[ "$(git branch --show-current)" == "$ARTRIX_BRANCH" ]] || fail "Switch to $ARTRIX_BRANCH before updating."
+  git fetch --prune origin "$ARTRIX_BRANCH"
+  git merge --ff-only "origin/$ARTRIX_BRANCH"
+  npm ci --ignore-scripts
+  npm run build
+}
+
+version() {
+  printf 'Artrix %s (%s)\n' "$(node -p 'require(process.argv[1]).version' "$ARTRIX_ROOT/package.json")" "$(git -C "$ARTRIX_ROOT" rev-parse --short HEAD)"
+}
+
+usage() {
+  cat <<'EOF'
+Usage: artrix <command>
+
+Commands:
+  start     Start the loopback-only local demo
+  check     Run typecheck, lint, tests, and production build
+  update    Fast-forward from the approved GitHub branch and rebuild
+  version   Show the installed version and Git revision
+  help      Show this help
+
+Environment:
+  ARTRIX_HOST       Bind address (default: 127.0.0.1)
+  ARTRIX_PORT       Web port (default: 3000)
+  ARTRIX_DEMO_MODE  Local demo toggle (default: true for `start`)
+EOF
+}
+
+case "${1:-help}" in
+  start) start ;;
+  check) check ;;
+  update) update ;;
+  version) version ;;
+  help|-h|--help) usage ;;
+  *) fail "Unknown command '$1'. Run 'artrix help'." ;;
+esac
